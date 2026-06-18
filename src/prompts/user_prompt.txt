@@ -1,0 +1,10 @@
+Report for week ending on {week_ending}
+
+Detected signals:
+{signals}
+
+Portfolio snapshot:
+{portfolio_summary}
+
+--------
+Write the weekly report now. Only use the numbers from the data above. Dont estimate or make up numbers.
