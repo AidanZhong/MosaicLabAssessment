@@ -90,32 +90,36 @@ def detect_loss_ratio_trend(loss_df):
     return res
 
 
-def detect_political_violence(premium_df, loss_df):
+def detect_gwp_outperformance(premium_df, loss_df):
     '''
-    Political Violence:
+    originally political violence
+
+    gwp_outperformance:
     GWP beats plan in at least 8 of 12 weeks and loss ratio stays below 60% — growth is only an opportunity if it's profitable. → premium and loss files combined
     '''
-    political_violence_premium = premium_df[premium_df["lob"] == "Political Violence"]
-    beating_plan_count = (
-            political_violence_premium["actual_gwp"] / political_violence_premium["plan_gwp"] >= 1.0).sum()
+    lobs = premium_df["lob"].unique()
+    res = []
+    for lob in lobs:
+        lob_df_premium = premium_df[premium_df["lob"] == lob]
+        beating_plan_count = (lob_df_premium["actual_gwp"] / lob_df_premium["plan_gwp"] >= 1.0).sum()
+        lob_df_loss = loss_df[loss_df["lob"] == lob]
+        latest_loss_ratio = lob_df_loss["attritional_loss_ratio_ytd"].iloc[-1]
 
-    political_violence_loss = loss_df[loss_df["lob"] == "Political Violence"]
-    latest_loss_ratio = political_violence_loss["attritional_loss_ratio_ytd"].iloc[-1]
-
-    if beating_plan_count >= MIN_WEEKS_ABOVE_PLAN and latest_loss_ratio < LOSS_RATIO_TARGET:
-        return {
-            "lob": "Political Violence",
-            "type": "opportunity",
-            "title": "Political Violence: Consistent outperformance with healthy loss ratio",
-            "detail": f"GWP exceeded plan in {beating_plan_count} of {len(political_violence_premium)} weeks. Loss ratio stands at {latest_loss_ratio:.0%} — well below the 60% target. Growth is profitable.",
-            "action": "Assess capacity headroom. If the book can absorb more volume at current margins, consider increasing the plan allocation."
-        }
-    return None
+        if beating_plan_count >= MIN_WEEKS_ABOVE_PLAN and latest_loss_ratio < LOSS_RATIO_TARGET:
+            res.append({
+                "lob": lob,
+                "rank": beating_plan_count,
+                "type": "opportunity",
+                "title": "Consistent outperformance with healthy loss ratio",
+                "detail": f"GWP exceeded plan in {beating_plan_count} of {len(lob_df_premium)} weeks. Loss ratio stands at {latest_loss_ratio:.0%} — well below the 60% target. Growth is profitable.",
+                "action": "Assess capacity headroom. If the book can absorb more volume at current margins, consider increasing the plan allocation."
+            })
+    return res
 
 
 def detect_all(premium_df, submission_df, loss_df):
-    signal1 = detect_excess_casualty(premium_df)
-    signal2 = detect_cyber_hit_rate(submission_df)
-    signal3 = detect_environmental_loss(loss_df)
-    signal4 = detect_political_violence(premium_df, loss_df)
+    signal1 = detect_gwp_underperformance(premium_df)
+    signal2 = detect_hit_rate_collapse(submission_df)
+    signal3 = detect_loss_ratio_trend(loss_df)
+    signal4 = detect_gwp_outperformance(premium_df, loss_df)
     return [s for s in [signal1, signal2, signal3, signal4] if s is not None]
