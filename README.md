@@ -107,6 +107,8 @@ Each signal is one function returning a dict (lob, type, title, detail, action) 
 - **Signal 3 — Environmental loss ratio:** latest YTD loss ratio exceeds week-1 value by more than 10pp *and* is above the 60% target — direction matters as much as level. → loss file only
 - **Signal 4 — Political Violence:** GWP beats plan in at least 8 of 12 weeks *and* loss ratio stays below 60% — growth is only an opportunity if it's profitable. → premium and loss files combined
 
+To be noticed that in this project, I intentionally directly search for the specific Lobs and check the patterns. In reality, I think it should check all the Lobs.
+
 ## 3. Prompt files
 There will be some placeholders in the prompt files. I need code to replace them with the actual data.
 
