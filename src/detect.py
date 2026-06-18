@@ -33,26 +33,33 @@ def detect_gwp_underperformance(premium_df):
     return res
 
 
-def detect_cyber_hit_rate(submission_df):
+def detect_hit_rate_collapse(submission_df):
     '''
-    Signal 2 — Cyber hit rate:
+    originally cyber_hit_rate
+
+    Signal 2 — hit_rate_collapse:
     average hit rate weeks 1–8 vs weeks 9–12 drops by more than 10pp — sustained collapse, not a one-off. submissions file only
     '''
-    cyber = submission_df[submission_df["lob"] == "Cyber"]
-    hit_rate = cyber["bound_count"] / (cyber["bound_count"] + cyber["quoted_count"] + cyber["declined_count"] +
-                                       cyber["ntu_count"])
-    early_avg = hit_rate.iloc[:8].mean()
-    late_avg = hit_rate.iloc[8:].mean()
 
-    if (early_avg - late_avg) > HIT_RATE_DROP_THRESHOLD:
-        return {
-            "lob": "Cyber",
-            "type": "concern",
-            "title": "Cyber: Hit rate collapse in weeks 9–12",
-            "detail": f"Cyber hit rate averaged {early_avg:.0%} in weeks 1–8, dropping to {late_avg:.0%} in weeks 9–12.",
-            "action": "Review Cyber pricing against market — rising NTU suggests competitors are offering cheaper terms."
-        }
-    return None
+    lobs = submission_df["lob"].unique()
+    res = []
+    for lob in lobs:
+        lob_df = submission_df[submission_df["lob"] == lob]
+        hit_rate = lob_df["bound_count"] / (lob_df["bound_count"] + lob_df["quoted_count"] + lob_df["declined_count"] +
+                                            lob_df["ntu_count"])
+        early_avg = hit_rate.iloc[:8].mean()
+        late_avg = hit_rate.iloc[8:].mean()
+
+        if (early_avg - late_avg) > HIT_RATE_DROP_THRESHOLD:
+            res.append({
+                "lob": lob,
+                "rank": early_avg - late_avg,
+                "type": "concern",
+                "title": "Hit rate collapse in weeks 9–12",
+                "detail": f"Hit rate averaged {early_avg:.0%} in weeks 1–8, dropping to {late_avg:.0%} in weeks 9–12.",
+                "action": "Review pricing against market — rising NTU suggests competitors are offering cheaper terms."
+            })
+    return res
 
 
 def detect_environmental_loss(loss_df):
@@ -91,13 +98,14 @@ def detect_political_violence(premium_df, loss_df):
 
     if beating_plan_count >= MIN_WEEKS_ABOVE_PLAN and latest_loss_ratio < LOSS_RATIO_TARGET:
         return {
-            "lob":    "Political Violence",
-            "type":   "opportunity",
-            "title":  "Political Violence: Consistent outperformance with healthy loss ratio",
+            "lob": "Political Violence",
+            "type": "opportunity",
+            "title": "Political Violence: Consistent outperformance with healthy loss ratio",
             "detail": f"GWP exceeded plan in {beating_plan_count} of {len(political_violence_premium)} weeks. Loss ratio stands at {latest_loss_ratio:.0%} — well below the 60% target. Growth is profitable.",
             "action": "Assess capacity headroom. If the book can absorb more volume at current margins, consider increasing the plan allocation."
         }
     return None
+
 
 def detect_all(premium_df, submission_df, loss_df):
     signal1 = detect_excess_casualty(premium_df)
