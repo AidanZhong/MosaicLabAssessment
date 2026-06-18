@@ -118,8 +118,12 @@ def detect_gwp_outperformance(premium_df, loss_df):
 
 
 def detect_all(premium_df, submission_df, loss_df):
-    signal1 = detect_gwp_underperformance(premium_df)
-    signal2 = detect_hit_rate_collapse(submission_df)
-    signal3 = detect_loss_ratio_trend(loss_df)
-    signal4 = detect_gwp_outperformance(premium_df, loss_df)
-    return [s for s in [signal1, signal2, signal3, signal4] if s is not None]
+    all_signals = (
+            detect_gwp_underperformance(premium_df) +
+            detect_hit_rate_collapse(submission_df) +
+            detect_loss_ratio_trend(loss_df) +
+            detect_gwp_outperformance(premium_df, loss_df)
+    )
+    all_signals.sort(key=lambda s: s["rank"], reverse=True)
+    return all_signals
+
