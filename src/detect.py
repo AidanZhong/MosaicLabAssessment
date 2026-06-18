@@ -8,23 +8,29 @@ from config import GWP_UNDERPERFORMANCE_THRESHOLD, MIN_WEEKS_BELOW_THRESHOLD, HI
     LOSS_RATIO_MIN_RISE, LOSS_RATIO_TARGET, MIN_WEEKS_ABOVE_PLAN
 
 
-def detect_excess_casualty(premium_df):
+def detect_gwp_underperformance(premium_df):
     '''
-    Signal 1 — Excess Casualty:
-    actual GWP(revenue) below 60% of plan in at least MIN_WEEKS_BELOW_THRESHOLD of 12 weeks — structural, not a blip. → premium file only
-    '''
-    excess_casualty = premium_df[premium_df["lob"] == "Excess Casualty"]
-    below_count = (excess_casualty["actual_gwp"] / excess_casualty["plan_gwp"] < GWP_UNDERPERFORMANCE_THRESHOLD).sum()
+    originally excess_casualty
 
-    if below_count >= MIN_WEEKS_BELOW_THRESHOLD:
-        return {
-            "lob": "Excess Casualty",
-            "type": "concern",
-            "title": "Excess Casualty: Structural GWP underperformance",
-            "detail": f"Actual GWP was below {GWP_UNDERPERFORMANCE_THRESHOLD:.0%} of plan in {below_count} of {len(excess_casualty)} weeks.",
-            "action": "Check what is underperforming and adjust accordingly"
-        }
-    return None
+    Signal 1 — gwp_underperformance:
+    actual GWP(revenue) below 60% of plan in at least MIN_WEEKS_BELOW_THRESHOLD, rank by how many weeks it's been below
+    '''
+    lobs = premium_df["lob"].unique()
+    res = []
+    for lob in lobs:
+        lob_df = premium_df[premium_df["lob"] == lob]
+        below_count = (lob_df["actual_gwp"] / lob_df["plan_gwp"] < GWP_UNDERPERFORMANCE_THRESHOLD).sum()
+        if below_count >= MIN_WEEKS_BELOW_THRESHOLD:
+            res.append({
+                "lob": lob,
+                "rank": below_count,
+                "type": "concern",
+                "title": f"{lob}: Structural GWP underperformance",
+                "detail": f"Actual GWP was below {GWP_UNDERPERFORMANCE_THRESHOLD:.0%} of plan in {below_count} of {len(lob_df)} weeks.",
+                "action": "Check what is underperforming and adjust accordingly"
+            })
+
+    return res
 
 
 def detect_cyber_hit_rate(submission_df):
