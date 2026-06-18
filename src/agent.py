@@ -13,6 +13,7 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from config import LOSS_INDICATOR_FILE, PIPLINE_FILE, WEEKLY_PREMIUM_FILE, WEEKLY_SUBMISSION_FILE
+from src.detect import detect_all
 
 load_dotenv()
 
@@ -264,3 +265,17 @@ buildHeatmap();
     output_dir = Path(__file__).parent.parent / "output"
     output_dir.mkdir(exist_ok=True)
     (output_dir / "dashboard.html").write_text(html, encoding="utf-8")
+
+
+def main():
+    loss, pipeline, premium, submissions = read_data()
+    signals = detect_all(premium, submissions, loss)
+    week_ending = premium["week_ending"].max().strftime("%Y-%m-%d")
+    system_prompt, user_prompt = build_prompt(week_ending, signals, premium)
+    narrative = call_claude(system_prompt, user_prompt)
+    save_outputs(narrative)
+    json_data = save_json(narrative, signals, premium, submissions)
+    generate_dashboard(json_data)
+
+if __name__ == "__main__":
+    main()
