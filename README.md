@@ -143,5 +143,22 @@ A JSON file with the following structure:
 
 A self-contained HTML file.
 
+# Probing Questions
+
+## Q1 — The CUO says Cyber was flagged last week but the underwriter says it was a one-off. How do I stop that happening?
+
+The rule lies behind is Cyber hit rate compares the avg week 1-8 vs week 9-12. Which means a single week is not likely to flip the signal.
+If the CUO complained, first thing I'd do is pulling out the data map. Or maybe check and configure the config.py thresholds.
+
+## Q2 — How do I track changes to the prompt so I can see what changed and roll back?
+
+It is formated as a git repo file. Just track it as the git version control system.
+
+## Q3 — If this runs unattended at 6am every Monday, what could go wrong?
+- API key expires or hits limit
+- Data missing or malformed
+- Too early to let people know it failed
+The main principle: fail loudly, never silently. A missing report is better than a wrong one delivered with no warning.
+
 # Implementations
 See this in jupyter notebook
