@@ -143,6 +143,7 @@ def generate_dashboard(data: dict):
         <div class="signal-card" style="border-left: 4px solid {border}">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
             <span class="signal-tag" style="background:{tag_bg}">{tag}</span>
+            <span style="font-size:11px; color:#7b2d8b; font-weight:700">{s['lob']}</span>
             <span style="font-size:11px; color:#888; font-weight:600">severity {rank_val}</span>
           </div>
           <h3>{s['title']}</h3>
