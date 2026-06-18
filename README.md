@@ -100,20 +100,18 @@ built as in Implementation
 
 I have 4 confirmed signals, each needing a rule that requires a sustained pattern — never trigger off a single week. The detector lives in `detect.py`, completely separate from the LLM. Ranking is deterministic in code; the LLM only writes the narrative from results I've already decided.
 
-Each signal is one function returning a dict (lob, type, title, detail, action) or None. A `detect_all()` wrapper calls all four and returns the non-None results. All thresholds live in `config.py` so they can be tuned without touching logic.
+Each rule is one function that loops over all 8 LoB, returning a list of signals for any that breach the threshold. A `detect_all()` wrapper calls all four functions, flattens the results into one list, and sorts by rank — higher rank means further from the threshold, so more urgent. All thresholds live in `config.py`.
 
-- **Signal 1 — Excess Casualty:** actual GWP(revenue) below 60% of plan in at least 9 of 12 weeks — structural, not a blip. → premium file only
-- **Signal 2 — Cyber hit rate:** average hit rate weeks 1–8 vs weeks 9–12 drops by more than 10pp — sustained collapse, not a one-off. submissions file only
-- **Signal 3 — Environmental loss ratio:** latest YTD loss ratio exceeds week-1 value by more than 10pp *and* is above the 60% target — direction matters as much as level. → loss file only
-- **Signal 4 — Political Violence:** GWP beats plan in at least 8 of 12 weeks *and* loss ratio stays below 60% — growth is only an opportunity if it's profitable. → premium and loss files combined
-
-To be noticed that in this project, I intentionally directly search for the specific Lobs and check the patterns. In reality, I think it should check all the Lobs.
+- **`detect_gwp_underperformance`:** any LoB with actual GWP below 60% of plan in at least 9 of 12 weeks. Rank = number of weeks below threshold.
+- **`detect_hit_rate_collapse`:** any LoB where average hit rate drops more than 10pp between weeks 1–8 and weeks 9–12. Rank = size of the drop.
+- **`detect_loss_ratio_trend`:** any LoB where YTD loss ratio rises more than 10pp from week 1 *and* ends above 60% target. Rank = total rise.
+- **`detect_gwp_outperformance`:** any LoB beating plan in at least 8 of 12 weeks with loss ratio below 60% — returned as opportunity. Rank = weeks above plan.
 
 ## 3. Prompt files
 There will be some placeholders in the prompt files. I need code to replace them with the actual data.
 
 ## 4. Agent orchestrator
-Wire the data loading, detectors running, generating the prompt, calls LLM, writing the analysis.json and narrative.txt files.
+Wire the data loading, detectors running, generating the prompt, calls LLM, writing the `analysis.json`, `narrative.md` and `dashboard.html` files.
 
 ## 5. Dashboard
 A JSON file with the following structure:

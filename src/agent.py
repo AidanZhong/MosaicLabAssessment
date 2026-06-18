@@ -105,9 +105,14 @@ def save_json(narrative, signals, premium_df, submission_df):
                                            lob_data["ntu_count"])
         hit_rate_lobs[lob] = hit_rate.round(2).tolist()
 
+    # Otherwise, the rank is not serializable to JSON
+    clean_signals = [
+        {**s, "rank": float(s["rank"])} for s in signals
+    ]
+
     output = {
         "narrative": narrative,
-        "signals": signals,
+        "signals": clean_signals,
         "charts": {
             "gwp": {"weeks": weeks, "lobs": gwp_lobs},
             "hit_rate": {"weeks": weeks, "lobs": hit_rate_lobs},
@@ -133,9 +138,13 @@ def generate_dashboard(data: dict):
             border = "#27ae60"
             tag_bg = "#27ae60"
             tag = "OPPORTUNITY"
+        rank_val = round(s['rank'], 2) if isinstance(s['rank'], float) else s['rank']
         signal_cards += f"""
         <div class="signal-card" style="border-left: 4px solid {border}">
-          <span class="signal-tag" style="background:{tag_bg}">{tag}</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+            <span class="signal-tag" style="background:{tag_bg}">{tag}</span>
+            <span style="font-size:11px; color:#888; font-weight:600">severity {rank_val}</span>
+          </div>
           <h3>{s['title']}</h3>
           <p>{s['detail']}</p>
           <p class="action"><strong>Action:</strong> {s['action']}</p>
