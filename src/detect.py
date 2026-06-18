@@ -62,26 +62,32 @@ def detect_hit_rate_collapse(submission_df):
     return res
 
 
-def detect_environmental_loss(loss_df):
+def detect_loss_ratio_trend(loss_df):
     '''
-    Signal 3 — Environmental loss ratio:
+    originally environmental_loss_ratio
+
+    Signal 3 — loss_ratio_trend:
     latest YTD loss ratio exceeds week-1 value by more than 10pp and is above the 60% target — direction matters as much as level. → loss file only
     '''
-    environmental = loss_df[loss_df["lob"] == "Environmental"]
-    week1_loss_ratio = environmental["attritional_loss_ratio_ytd"].iloc[0]
-    latest_loss_ratio = environmental["attritional_loss_ratio_ytd"].iloc[-1]
-    is_rise_exceeds = latest_loss_ratio - week1_loss_ratio > LOSS_RATIO_MIN_RISE
-    is_latest_value_above = latest_loss_ratio > LOSS_RATIO_TARGET
+    lobs = loss_df["lob"].unique()
+    res = []
+    for lob in lobs:
+        lob_df = loss_df[loss_df["lob"] == lob]
+        latest_loss_ratio = lob_df["attritional_loss_ratio_ytd"].iloc[-1]
+        week1_loss_ratio = lob_df["attritional_loss_ratio_ytd"].iloc[0]
+        is_rise_exceeds = latest_loss_ratio - week1_loss_ratio > LOSS_RATIO_MIN_RISE
+        is_latest_value_above = latest_loss_ratio > LOSS_RATIO_TARGET
 
-    if is_rise_exceeds and is_latest_value_above:
-        return {
-            "lob": "Environmental",
-            "type": "concern",
-            "title": "Environmental: Loss ratio deteriorating above target",
-            "detail": f"Attritional loss ratio has risen from {week1_loss_ratio:.0%} at week 1 to {latest_loss_ratio:.0%} at week 12 — {latest_loss_ratio - week1_loss_ratio:.0%} above starting point and beyond the 60% target.",
-            "action": "Flag Environmental book for claims review and assess whether recent bound business warrants a rate adequacy check."
-        }
-    return None
+        if is_rise_exceeds and is_latest_value_above:
+            res.append({
+                "lob": lob,
+                "rank": latest_loss_ratio - week1_loss_ratio,
+                "type": "concern",
+                "title": "Loss ratio deteriorating above target",
+                "detail": f"Attritional loss ratio has risen from {week1_loss_ratio:.0%} at week 1 to {latest_loss_ratio:.0%} at week 12 — {latest_loss_ratio - week1_loss_ratio:.0%} above starting point and beyond the 60% target.",
+                "action": "Flag for claims review and assess whether recent bound business warrants a rate adequacy check."
+            })
+    return res
 
 
 def detect_political_violence(premium_df, loss_df):
